@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Medical Jaundice Detection System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+        /* --- General Resets & Variables (Royal Palette) --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-deep: #4A0E4E; /* Deep Regal Purple */
+            --secondary-accent: #7A087B; /* Slightly Lighter Purple */
+            --gold-accent: #D4AF37; /* Metallic Gold */
+            --light-gold: #F8D776; /* Lighter Gold for gradients/highlights */
+            --dark-bg: #1A1A2E; /* Very Dark Blue-Purple for body/header */
+            --medium-bg: #2A2A4A; /* Slightly lighter dark for cards */
+            --light-bg: #3E3E60; /* Even lighter dark for detailed elements */
+            --text-light: #E0E0E0; /* Light text on dark backgrounds */
+            --text-dark: #A0A0B0; /* Slightly darker light text */
+            --gradient-royal: linear-gradient(135deg, var(--primary-deep) 0%, var(--secondary-accent) 100%);
+            --shadow: 0 10px 25px rgba(0,0,0,0.4); /* Darker shadow for royal feel */
+
+            /* Alert colors (keep standard for clarity, but adjust background to fit palette) */
+            --alert-success-bg: #d4edda;
+            --alert-success-text: #155724;
+            --alert-success-border: #c3e6cb;
+
+            --alert-warning-bg: #fff3cd;
+            --alert-warning-text: #856404;
+            --alert-warning-border: #ffeeba;
+
+            --alert-danger-bg: #f8d7da;
+            --alert-danger-text: #721c24;
+            --alert-danger-border: #f5c6cb;
+        }
+
+        /* --- Body & Layout --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark-bg);
+            min-height: 100vh;
+            color: var(--text-light);
+            line-height: 1.6;
+            overflow: hidden; /* Prevent scrolling when disclaimer is active */
+        }
+
+        /* --- Main App Content Container --- */
+        #mainAppContent {
+            display: block; /* Ensure it's a block element */
+            opacity: 0;
+            visibility: hidden;
+            height: 100vh; /* Occupy full viewport height initially to measure properly */
+            overflow: hidden; /* Hide overflow when hidden */
+            transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
+        }
+
+        #mainAppContent.show {
+            opacity: 1;
+            visibility: visible;
+            height: auto; /* Allow content to dictate height */
+            overflow: visible; /* Allow content to overflow/scroll if needed */
+        }
+
+        .medical-header {
+            background: var(--gradient-royal);
+            color: var(--text-light);
+            padding: 2.5rem 0;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border-bottom: 5px solid var(--gold-accent);
+            width: 100%; /* Ensure header spans full width */
+        }
+
+        .medical-header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            color: var(--light-gold); /* Gold title */
+        }
+
+        .medical-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* --- Status Bar --- */
+        .status-bar {
+            background: var(--medium-bg);
+            padding: 1.2rem 4rem; /* Adjusted horizontal padding */
+            margin: 2rem 0; /* Remove auto horizontal margin */
+            width: 100%; /* Make it span full width */
+            border-radius: 0; /* Remove border-radius to align with full width */
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            border-left: none; /* Remove left border */
+            border-right: none; /* Remove right border */
+            border-top: 1px solid rgba(212, 175, 55, 0.3); /* Subtle gold top border */
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3); /* Subtle gold bottom border */
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        .status-item i {
+            color: var(--gold-accent); /* Gold icons */
+            font-size: 1.2rem;
+        }
+
+        .status-indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--alert-success-text); /* Use a standard green for active */
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- Main Content Container (for the grid layout) --- */
+        .main-container {
+            width: 100%; /* Make it span full width */
+            padding: 2rem 4rem; /* Adjusted horizontal padding */
+            margin: 0; /* Remove auto margin */
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            /* opacity is handled by #mainAppContent */
+        }
+
+
+        /* --- Upload Section --- */
+        .upload-section {
+            background: var(--medium-bg);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .upload-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--gradient-royal);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--light-gold);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .section-title i {
+            color: var(--gold-accent);
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--gold-accent);
+            border-radius: 20px;
+            padding: 3.5rem;
+            text-align: center;
+            transition: all 0.4s ease;
+            background: linear-gradient(45deg, rgba(74, 14, 78, 0.6), rgba(122, 8, 123, 0.6)); /* Darker gradient */
+            cursor: pointer;
+            position: relative;
+            color: var(--text-light);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--light-gold);
+            background: linear-gradient(45deg, rgba(74, 14, 78, 0.8), rgba(122, 8, 123, 0.8));
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--light-gold);
+            background: linear-gradient(45deg, rgba(74, 14, 78, 0.8), rgba(122, 8, 123, 0.8));
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 5rem;
+            color: var(--light-gold);
+            margin-bottom: 1.5rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-15px); }
+            60% { transform: translateY(-7px); }
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: var(--gold-accent);
+            color: var(--dark-bg); /* Dark text on gold */
+            border: none;
+            padding: 1.2rem 2.5rem;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            text-decoration: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            background: var(--light-gold);
+        }
+        .upload-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+
+        /* --- Medical Info Section --- */
+        .medical-info {
+            background: var(--medium-bg);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .medical-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--gradient-royal);
+        }
+
+        .info-card {
+            background: var(--light-bg); /* Lighter dark background for cards */
+            border-radius: 15px;
+            padding: 1.8rem;
+            margin-bottom: 1.2rem;
+            border-left: 5px solid var(--gold-accent);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .info-card h3 {
+            color: var(--light-gold);
+            margin-bottom: 0.8rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+        .info-card h3 i {
+            color: var(--gold-accent);
+        }
+
+        .info-card p {
+            color: var(--text-dark);
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature-item {
+            background: var(--light-bg);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--text-dark);
+        }
+
+        .feature-item:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            background: linear-gradient(135deg, var(--light-bg), rgba(62, 62, 96, 0.8));
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--gold-accent);
+            margin-bottom: 0.8rem;
+        }
+        .feature-item h4 {
+            color: var(--light-gold);
+        }
+
+        /* --- Loading Overlay --- */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+
+        .loading-content {
+            background: var(--medium-bg);
+            padding: 4rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 450px;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.5s ease-out;
+            border: 2px solid var(--gold-accent);
+            color: var(--text-light);
+        }
+
+        .medical-spinner {
+            width: 70px;
+            height: 70px;
+            border: 5px solid rgba(212, 175, 55, 0.3); /* Gold light border */
+            border-top: 5px solid var(--gold-accent); /* Gold active border */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- Results Modal & Pre-Results Disclaimer Modal (Reused Styles) --- */
+        .results-modal, .pre-results-disclaimer-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000; /* High z-index */
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: var(--medium-bg);
+            max-width: 1100px; /* Increased width for the report part */
+            max-height: 90%;
+            border-radius: 25px;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+            animation: fadeIn 0.5s ease-out;
+            margin: 20px;
+            border: 2px solid var(--gold-accent);
+        }
+
+        .modal-header {
+            background: var(--gradient-royal);
+            color: var(--text-light);
+            padding: 2.5rem;
+            text-align: center;
+            position: relative;
+            border-top-left-radius: 23px;
+            border-top-right-radius: 23px;
+            border-bottom: 3px solid var(--gold-accent);
+        }
+
+        .modal-header h2 {
+            font-size: 2.2rem;
+            margin-bottom: 0.8rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+            color: var(--light-gold);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            color: var(--light-gold);
+            font-size: 2.5rem;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+            color: var(--white);
+        }
+
+        .results-body {
+            padding: 2.5rem;
+            color: var(--text-light);
+        }
+
+        .result-section {
+            margin-bottom: 2.5rem;
+            padding: 2rem;
+            border-radius: 20px;
+            background: var(--light-bg);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            color: var(--light-gold);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-weight: 600;
+            border-bottom: 1px dashed rgba(212, 175, 55, 0.3);
+            padding-bottom: 0.8rem;
+        }
+        .result-title i {
+            color: var(--gold-accent);
+        }
+
+        .color-analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .color-space {
+            background: var(--medium-bg);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 5px solid var(--secondary-accent);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .color-space h4 {
+            margin-bottom: 1rem;
+            color: var(--light-gold);
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .color-space h4 i {
+            color: var(--gold-accent);
+        }
+
+        .color-values {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .color-value {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem;
+            background: var(--dark-bg);
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            color: var(--text-dark);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        .recommendation {
+            background: var(--dark-bg);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 0.8rem;
+            border-left: 4px solid var(--gold-accent);
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        /* --- Alert Messages (In-Page) --- */
+        .alert {
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin: 1.5rem 0;
+            display: flex;
+            align-items: flex-start; /* Align text to top */
+            gap: 1rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .alert i {
+            font-size: 2rem;
+            line-height: 1; /* Align icon better */
+        }
+
+        .alert-success {
+            background: var(--alert-success-bg);
+            border-left: 6px solid var(--alert-success-text);
+            color: var(--alert-success-text);
+        }
+
+        .alert-warning {
+            background: var(--alert-warning-bg);
+            border-left: 6px solid var(--alert-warning-text);
+            color: var(--alert-warning-text);
+        }
+
+        .alert-danger {
+            background: var(--alert-danger-bg);
+            border-left: 6px solid var(--alert-danger-text);
+            color: var(--alert-danger-text);
+        }
+
+        .visualization-container {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .visualization-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--gold-accent);
+        }
+
+        /* --- Medical Disclaimer (General Style, now reused for initial disclaimer) --- */
+        .medical-disclaimer {
+            background: var(--dark-bg);
+            border: 2px solid var(--alert-danger-text); /* Changed from --error-red */
+            border-radius: 15px;
+            padding: 1.8rem;
+            margin-top: 2.5rem;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            color: var(--text-dark);
+        }
+
+        .disclaimer-title {
+            color: var(--alert-danger-text); /* Changed from --error-red */
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+        }
+
+        .disclaimer-text {
+            color: var(--text-dark);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        /* --- Utility & Animation Classes --- */
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: var(--dark-bg);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gold-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .text-small {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            margin-top: 0.7rem;
+        }
+
+        /* --- Toast-style Alert Messages --- */
+        #alertContainer {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .alert-message {
+            padding: 18px 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            max-width: 450px;
+            animation: slideInRight 0.6s forwards;
+            opacity: 0.98;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .alert-message.success {
+            background-color: var(--alert-success-bg);
+            color: var(--alert-success-text);
+            border: 1px solid var(--alert-success-border);
+        }
+
+        .alert-message.warning {
+            background-color: var(--alert-warning-bg);
+            color: var(--alert-warning-text);
+            border: 1px solid var(--alert-warning-border);
+        }
+
+        .alert-message.danger {
+            background-color: var(--alert-danger-bg);
+            color: var(--alert-danger-text);
+            border: 1px solid var(--alert-danger-border);
+        }
+
+        .alert-message .icon {
+            font-size: 1.8rem;
+        }
+
+        .alert-message .close-alert {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: inherit;
+            margin-left: auto;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+        .alert-message .close-alert:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+
+        /* --- Action Buttons in Modal Footer --- */
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end; /* Align to right */
+            gap: 1rem;
+            padding: 1.5rem 2.5rem;
+            border-top: 1px solid rgba(212, 175, 55, 0.2);
+            border-bottom-left-radius: 23px;
+            border-bottom-right-radius: 23px;
+            background: var(--light-bg);
+        }
+
+        .action-button {
+            background: var(--secondary-accent);
+            color: var(--text-light);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .action-button:hover {
+            background: var(--primary-deep);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .action-button.primary {
+            background: var(--gold-accent);
+            color: var(--dark-bg);
+        }
+        .action-button.primary:hover {
+            background: var(--light-gold);
+            color: var(--dark-bg);
+        }
+
+
+        /* --- Print Specific Styles --- */
+        @media print {
+            body {
+                background: none;
+                color: black;
+                -webkit-print-color-adjust: exact !important; /* For printing background colors */
+                print-color-adjust: exact !important;
+            }
+            .medical-header, .status-bar, #mainAppContent, .loading-overlay, #alertContainer, .close-btn, .modal-actions, #initialDisclaimerOverlay, #preResultsDisclaimerModal {
+                display: none !important; /* Hide non-report elements and all disclaimers */
+            }
+            .results-modal {
+                position: static;
+                display: block !important;
+                background: none;
+                backdrop-filter: none;
+                width: auto;
+                height: auto;
+                overflow: visible;
+            }
+            .modal-content {
+                max-width: 100%;
+                max-height: none;
+                border-radius: 0;
+                box-shadow: none;
+                margin: 0;
+                border: none;
+                background: white;
+                color: black; /* Ensure text is black for printing */
+            }
+            .modal-header {
+                background: #f0f0f0 !important; /* Light gray for header */
+                color: #333 !important;
+                border-radius: 0;
+                border-bottom: 1px solid #ccc !important;
+                padding: 1.5rem;
+            }
+            .modal-header h2, .modal-header p {
+                color: #333 !important;
+                text-shadow: none;
+            }
+            .results-body {
+                padding: 1.5rem;
+                color: black;
+            }
+            .result-section {
+                box-shadow: none;
+                border: 1px solid #eee;
+                background: #f9f9f9;
+                padding: 1rem;
+            }
+            .result-title {
+                border-bottom: 1px dashed #ccc;
+                color: #555 !important;
+            }
+            .result-title i {
+                 color: #777 !important;
+            }
+            .color-space, .color-value, .recommendation {
+                background: white;
+                border: 1px solid #eee;
+                box-shadow: none;
+                color: #333 !important;
+            }
+            .color-space h4, .color-space h4 i {
+                color: #555 !important;
+            }
+            .alert {
+                box-shadow: none;
+                border: 1px solid #eee;
+                background: white;
+            }
+             .text-small {
+                color: #666 !important;
+            }
+        }
+
+
+        /* --- Initial Disclaimer Overlay --- */
+        #initialDisclaimerOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95); /* Darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000; /* Higher than other modals */
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .disclaimer-content {
+            background: var(--dark-bg); /* Very dark background */
+            max-width: 700px;
+            padding: 3rem;
+            border-radius: 25px;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+            border: 3px solid var(--gold-accent); /* Stronger gold border */
+            color: var(--text-light);
+        }
+
+        .disclaimer-content h2 {
+            font-size: 2.5rem;
+            color: var(--light-gold);
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .disclaimer-content p {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            color: var(--text-dark);
+        }
+
+        .disclaimer-content .action-button {
+            padding: 1rem 3rem;
+            font-size: 1.3rem;
+            background: var(--gold-accent);
+            color: var(--dark-bg);
+            border-radius: 50px;
+        }
+
+        .disclaimer-content .action-button:hover {
+            background: var(--light-gold);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 1.5rem;
+                gap: 2rem;
+            }
+
+            .medical-header h1 {
+                font-size: 2.2rem;
+            }
+            .medical-header p {
+                font-size: 1rem;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                gap: 1.2rem;
+                margin: 1.5rem 0; /* Adjusted for full width */
+                padding: 1rem;
+            }
+
+            .upload-zone {
+                padding: 2.5rem;
+            }
+            .upload-icon {
+                font-size: 4rem;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                margin: 15px;
+                max-width: 95%;
+            }
+            .modal-header {
+                padding: 2rem;
+            }
+            .modal-header h2 {
+                font-size: 1.8rem;
+            }
+            .close-btn {
+                font-size: 2rem;
+                width: 40px;
+                height: 40px;
+            }
+            .results-body {
+                padding: 1.5rem;
+            }
+            .result-title {
+                font-size: 1.3rem;
+            }
+            .color-analysis-grid {
+                grid-template-columns: 1fr;
+            }
+            .action-button {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.9rem;
+            }
+            .modal-actions {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 1.5rem;
+            }
+            .action-button + .action-button {
+                margin-top: 0.8rem; /* Space between buttons when stacked */
+            }
+
+            /* Initial Disclaimer Responsiveness */
+            .disclaimer-content {
+                padding: 2rem;
+                margin: 15px;
+            }
+            .disclaimer-content h2 {
+                font-size: 2rem;
+            }
+            .disclaimer-content p {
+                font-size: 1rem;
+            }
+            .disclaimer-content .action-button {
+                padding: 0.8rem 2rem;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="initialDisclaimerOverlay">
+        <div class="disclaimer-content animate__animated animate__zoomIn">
+            <h2><i class="fas fa-stethoscope"></i> Important Medical Disclaimer</h2>
+            <p>
+                This AI-powered system is intended for **screening and informational purposes only**.
+                It is **not** a substitute for professional medical advice, diagnosis, or treatment.
+                Always consult with a qualified healthcare professional for any medical concerns or conditions.
+                Relying solely on information provided by this system for medical decisions is **not advised**.
+            </p>
+            <button class="action-button primary" onclick="acceptDisclaimer()">
+                <i class="fas fa-check-circle"></i> I Understand and Accept
+            </button>
+        </div>
+    </div>
+
+    <div id="mainAppContent" class="hidden">
+        <header class="medical-header">
+            <div class="animate__animated animate__fadeInDown">
+                <h1><i class="fas fa-stethoscope"></i> Advanced Medical Jaundice Detection System By Dev Ayush</h1>
+                <p>AI-Powered Skin Analysis for Medical Screening</p>
+            </div>
+        </header>
+
+        <div class="status-bar animate__animated animate__fadeInUp">
+            <div class="status-item">
+                <div class="status-indicator"></div>
+                <span><strong>AI Model:</strong> Active</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-brain"></i>
+                <span><strong>Version:</strong> 2.1.0</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-shield-alt"></i>
+                <span><strong>Status:</strong> Operational</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-clock"></i>
+                <span id="current-time"></span>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <div class="upload-section animate__animated animate__fadeInLeft">
+                <h2 class="section-title">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    Image Analysis Portal
+                </h2>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">
+                        <i class="fas fa-camera-retro"></i>
+                    </div>
+                    <h3>Upload Medical Image</h3>
+                    <p>Drag and drop your image here or click to browse</p>
+                    <p class="text-small">Supported formats: PNG, JPG, JPEG, GIF, BMP, TIFF</p>
+                    <p class="text-small">Maximum file size: 16MB</p>
+
+                    <input type="file" id="imageInput" class="file-input" accept="image/*">
+                    <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
+                        <i class="fas fa-plus"></i>
+                        Select Image
+                    </button>
+                </div>
+
+                <div class="progress-bar" id="progressBar" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <div id="imagePreview" style="margin-top: 1.5rem; text-align: center; display: none;">
+                    <img id="previewImg" style="max-width: 100%; max-height: 250px; border-radius: 15px; box-shadow: var(--shadow); border: 2px solid var(--gold-accent);">
+                    <div style="margin-top: 1.5rem;">
+                        <button class="upload-btn" onclick="analyzeImage()">
+                            <i class="fas fa-microscope"></i>
+                            Analyze Image
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="medical-info animate__animated animate__fadeInRight">
+                <h2 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Medical Information
+                </h2>
+
+                <div class="info-card">
+                    <h3><i class="fas fa-eye"></i> About Jaundice Detection</h3>
+                    <p>This system utilizes advanced computer vision and machine learning to analyze skin tone and detect potential signs of jaundice through comprehensive color space analysis.</p>
+                </div>
+
+                <div class="info-card">
+                    <h3><i class="fas fa-cogs"></i> Analysis Features</h3>
+                    <p>Multi-dimensional color analysis including RGB, YCrCb, and HSV color spaces, along with medical indicators like yellowness index and bilirubin impression.</p>
+                </div>
+
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <h4>Color Analysis</h4>
+                        <p>RGB, YCrCb, HSV</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h4>Statistical Analysis</h4>
+                        <p>Mean & Deviation</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <h4>Bilirubin Impression</h4>
+                        <p>Qualitative Indicator</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h4>AI Prediction</h4>
+                        <p>Advanced Model</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="medical-spinner"></div>
+            <h3>Analyzing Medical Image...</h3>
+            <p>Processing advanced color analysis</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="loadingProgress"></div>
+            </div>
+            <p class="text-small" style="margin-top: 1.5rem; color: var(--text-dark);">Please wait, this may take a few moments...</p>
+        </div>
+    </div>
+
+    <div class="pre-results-disclaimer-modal" id="preResultsDisclaimerModal">
+        <div class="modal-content animate__animated animate__zoomIn">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Important Medical Notice</h2>
+                <p>Please read before viewing the detailed report.</p>
+            </div>
+            <div class="results-body" style="padding: 2.5rem;">
+                <p style="font-size: 1.1rem; line-height: 1.6; color: var(--text-light);">
+                    The information provided in the upcoming report is for **screening and informational purposes only**.
+                    It is **not** intended to be a substitute for professional medical advice, diagnosis, or treatment.
+                    Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
+                    <br><br>
+                    Do not disregard professional medical advice or delay in seeking it because of something you have read in this report.
+                </p>
+            </div>
+            <div class="modal-actions" style="justify-content: center;">
+                <button class="action-button primary" onclick="acceptPreResultsDisclaimer()">
+                    <i class="fas fa-check-circle"></i> View Analysis Results
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-modal" id="resultsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <h2><i class="fas fa-file-medical-alt"></i> Medical Analysis Report</h2>
+                <p id="analysisTimestamp"></p>
+            </div>
+            <div class="results-body" id="resultsBody">
+                </div>
+            <div class="modal-actions">
+                <button class="action-button primary" onclick="printReport()">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+                <button class="action-button" onclick="downloadReport()">
+                    <i class="fas fa-download"></i> Download Data
+                </button>
+                <button class="action-button" onclick="resetApp()">
+                    <i class="fas fa-redo"></i> New Analysis
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <script>
+        let currentFile = null; // Stores the currently selected file
+        let analysisResults = null; // Stores the results from the backend
+
+        // --- Initial Disclaimer Logic ---
+        function acceptDisclaimer() {
+            document.getElementById('initialDisclaimerOverlay').style.display = 'none'; // Hide the disclaimer overlay
+            const mainAppContent = document.getElementById('mainAppContent');
+            mainAppContent.classList.remove('hidden'); // Remove the hidden class
+            mainAppContent.classList.add('show'); // Add the show class for animation
+            document.body.style.overflow = 'auto'; // Re-enable scrolling on the main page
+        }
+
+        // --- UI Update Functions ---
+        // Updates the current time displayed in the status bar
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleTimeString();
+        }
+        updateTime(); // Call once immediately
+        setInterval(updateTime, 1000); // Update every second
+
+        // Displays a toast-style alert message
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.classList.add('alert-message', type); // Add type for styling (success, warning, danger)
+
+            // Set icon based on alert type
+            let iconClass = '';
+            if (type === 'success') {
+                iconClass = 'fa-check-circle';
+            } else if (type === 'warning') {
+                iconClass = 'fa-exclamation-triangle';
+            } else if (type === 'danger') {
+                iconClass = 'fa-times-circle';
+            }
+
+            alertDiv.innerHTML = `
+                <span class="icon"><i class="fas ${iconClass}"></i></span>
+                <span>${message}</span>
+                <button class="close-alert" onclick="this.parentElement.remove();">&times;</button>
+            `;
+            alertContainer.appendChild(alertDiv);
+
+            // Auto-remove alert after 5 seconds with slide-out animation
+            setTimeout(() => {
+                alertDiv.style.animation = 'slideOutRight 0.5s forwards';
+                alertDiv.addEventListener('animationend', () => alertDiv.remove());
+            }, 5000);
+        }
+
+        // Shows the full-screen loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('loadingProgress').style.width = '0%'; // Reset progress bar
+        }
+
+        // Hides the full-screen loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // NEW: Show the pre-results disclaimer modal
+        function showPreResultsDisclaimer(data) {
+            analysisResults = data; // Store data for later
+            document.getElementById('preResultsDisclaimerModal').style.display = 'flex';
+        }
+
+        // NEW: Accept pre-results disclaimer and show actual results
+        function acceptPreResultsDisclaimer() {
+            document.getElementById('preResultsDisclaimerModal').style.display = 'none'; // Hide this disclaimer
+            showResults(analysisResults); // Now show the main results modal
+        }
+
+        // Displays the results modal with generated content
+        function showResults(data) {
+            // data is already stored in analysisResults from showPreResultsDisclaimer
+            const modal = document.getElementById('resultsModal');
+            const resultsBody = document.getElementById('resultsBody');
+            const timestamp = document.getElementById('analysisTimestamp');
+
+            timestamp.textContent = `Analysis completed on ${new Date().toLocaleString()}`;
+
+            // Populate the modal body with analysis results
+            resultsBody.innerHTML = generateResultsHTML(data);
+            modal.style.display = 'flex'; // Show the modal
+        }
+
+        // Closes the results modal
+        function closeModal() {
+            document.getElementById('resultsModal').style.display = 'none';
+        }
+
+        // --- File Upload Handling ---
+        const uploadZone = document.getElementById('uploadZone');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+
+        // Drag & Drop Event Listeners
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Prevent default to allow drop
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]); // Process the first dropped file
+            }
+        });
+
+        // Click on upload zone to open file dialog
+        uploadZone.addEventListener('click', (e) => {
+            // Only trigger input click if the actual file input or button wasn't clicked
+            if (e.target.id === 'uploadZone' || e.target.tagName === 'P' || e.target.tagName === 'H3' || e.target.tagName === 'DIV') {
+                imageInput.click();
+            }
+        });
+
+        // Handle file selection from input change
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        // Processes the selected file (preview and validation)
+        function handleFileSelect(file) {
+            currentFile = file; // Store the file globally
+
+            // Validate file type
+            if (!isValidImageFile(file)) {
+                showAlert('Invalid file format. Please select a valid image file (PNG, JPG, JPEG, GIF, BMP, TIFF).', 'warning');
+                imagePreview.style.display = 'none'; // Hide preview if invalid
+                currentFile = null;
+                return;
+            }
+
+            // Validate file size
+            const MAX_FILE_SIZE_MB = 16;
+            if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+                showAlert(`File too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`, 'warning');
+                imagePreview.style.display = 'none'; // Hide preview if too large
+                currentFile = null;
+                return;
+            }
+
+            // Show image preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+                imagePreview.classList.add('animate-fade-in'); // Add animation
+                showAlert('Image selected successfully! Click "Analyze Image" to proceed.', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Checks if the file is a valid image type
+        function isValidImageFile(file) {
+            const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/bmp', 'image/tiff'];
+            return validTypes.includes(file.type);
+        }
+
+        // --- Image Analysis via Flask Backend ---
+        function analyzeImage() {
+            if (!currentFile) {
+                showAlert('No image selected for analysis. Please select an image first.', 'warning');
+                return;
+            }
+
+            showLoading(); // Show loading overlay
+
+            // Prepare form data to send the file
+            const formData = new FormData();
+            formData.append('file', currentFile);
+
+            let progress = 0;
+            // Simulate progress for the loading bar (will update faster once actual response comes)
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15; // Incremental progress
+                if (progress > 90) progress = 90; // Cap at 90% until response is received
+                document.getElementById('loadingProgress').style.width = progress + '%';
+            }, 200); // Update every 200ms
+
+            // Fetch API to send image to Flask backend
+            fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                clearInterval(progressInterval); // Stop simulated progress
+                document.getElementById('loadingProgress').style.width = '100%'; // Complete progress bar
+
+                if (!response.ok) { // Check for HTTP errors (e.g., 400, 500)
+                    // Attempt to parse error message from server response
+                    return response.json().then(err => {
+                        throw new Error(err.message || `HTTP error! status: ${response.status}`);
+                    });
+                }
+                return response.json(); // Parse JSON response
+            })
+            .then(data => {
+                setTimeout(() => { // Small delay to allow 100% progress to be seen
+                    hideLoading(); // Hide loading overlay
+                    if (data.success) {
+                        showPreResultsDisclaimer(data); // Show the NEW disclaimer before results
+                        // showAlert('Analysis completed successfully!', 'success'); // This alert will now show after the pre-results disclaimer is accepted
+                    } else {
+                        // Display server-side error message
+                        showAlert(data.message || 'Analysis failed. Please try again.', 'danger');
+                        // Optional: reload page or reset UI on failure
+                        // _self.location.reload();
+                    }
+                }, 500);
+            })
+            .catch(error => {
+                clearInterval(progressInterval); // Ensure interval is cleared on error
+                document.getElementById('loadingProgress').style.width = '0%'; // Reset progress bar on error
+                hideLoading(); // Hide loading overlay
+                showAlert(`Error during analysis: ${error.message}`, 'danger');
+                // Optional: reload page or reset UI on catastrophic failure
+                // _self.location.reload();
+            });
+        }
+
+        // --- Generate HTML for Results Modal ---
+        function generateResultsHTML(data) {
+            const report = data.medical_report;
+            const prediction = report.analysis_summary.prediction;
+            const confidence = report.analysis_summary.confidence;
+            const riskLevel = report.analysis_summary.risk_level;
+
+            let alertClass = 'alert-success';
+            let alertIcon = 'fa-check-circle';
+
+            if (prediction.includes('Jaundice Detected')) {
+                alertClass = riskLevel === 'High' ? 'alert-danger' : 'alert-warning';
+                alertIcon = 'fa-exclamation-triangle';
+            }
+
+            let html = `
+                <div class="alert ${alertClass} animate-fade-in">
+                    <i class="fas ${alertIcon}" style="font-size: 1.8rem;"></i>
+                    <div>
+                        <strong>Diagnosis:</strong> <span style="font-size: 1.1em; font-weight: bold;">${prediction}</span><br>
+                        <strong>Confidence:</strong> ${confidence}<br>
+                        <strong>Risk Level:</strong> <span style="font-weight: bold;">${riskLevel}</span>
+                    </div>
+                </div>
+            `;
+
+            // Color Analysis Section
+            html += `
+                <div class="result-section animate-fade-in">
+                    <h3 class="result-title">
+                        <i class="fas fa-palette"></i>
+                        Comprehensive Color Analysis
+                    </h3>
+                    <div class="color-analysis-grid">
+                        <div class="color-space">
+                            <h4><i class="fas fa-square" style="color: #ef4444;"></i> RGB Color Space</h4>
+                            <div class="color-values">
+                                <div class="color-value"><span>Red (R):</span> <span>${report.color_analysis.rgb_values.red}</span></div>
+                                <div class="color-value"><span>Green (G):</span> <span>${report.color_analysis.rgb_values.green}</span></div>
+                                <div class="color-value"><span>Blue (B):</span> <span>${report.color_analysis.rgb_values.blue}</span></div>
+                            </div>
+                        </div>
+                        <div class="color-space">
+                            <h4><i class="fas fa-square" style="color: #3b82f6;"></i> YCbCr Color Space</h4>
+                            <div class="color-values">
+                                <div class="color-value"><span>Luminance (Y):</span> <span>${report.color_analysis.ycrcb_values.luminance}</span></div>
+                                <div class="color-value"><span>Red Chroma (Cr):</span> <span>${report.color_analysis.ycrcb_values.red_chroma}</span></div>
+                                <div class="color-value"><span>Blue Chroma (Cb):</span> <span>${report.color_analysis.ycrcb_values.blue_chroma}</span></div>
+                            </div>
+                        </div>
+                        <div class="color-space">
+                            <h4><i class="fas fa-square" style="color: #10b981;"></i> HSV Color Space</h4>
+                            <div class="color-values">
+                                <div class="color-value"><span>Hue (H):</span> <span>${report.color_analysis.hsv_values.hue}°</span></div>
+                                <div class="color-value"><span>Saturation (S):</span> <span>${report.color_analysis.hsv_values.saturation}%</span></div>
+                                <div class="color-value"><span>Value (V):</span> <span>${report.color_analysis.hsv_values.value}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Medical Indicators Section
+            html += `
+                <div class="result-section animate-fade-in">
+                    <h3 class="result-title">
+                        <i class="fas fa-chart-line"></i>
+                        Medical Indicators
+                    </h3>
+                    <div class="color-analysis-grid"> <div class="color-space" style="border-left-color: var(--gold-accent);">
+                            <h4><i class="fas fa-tint"></i> Yellowness Index</h4>
+                            <p>${report.medical_indicators.yellowness_index}</p>
+                            <p class="text-small">Higher values may indicate increased yellowness of skin.</p>
+                        </div>
+                        <div class="color-space" style="border-left-color: var(--secondary-accent);">
+                            <h4><i class="fas fa-flask"></i> Bilirubin Impression</h4>
+                            <p>${report.medical_indicators.bilirubin_impression}</p>
+                            <p class="text-small">Qualitative impression correlating to bilirubin levels based on visual analysis.</p>
+                        </div>
+                        <div class="color-space" style="border-left-color: var(--primary-deep);">
+                            <h4><i class="fas fa-expand-arrows-alt"></i> Skin Coverage Analyzed</h4>
+                            <p>${report.medical_indicators.skin_coverage}</p>
+                            <p class="text-small">Percentage of image identified as skin area.</p>
+                        </div>
+                        <div class="color-space" style="border-left-color: var(--gold-accent);">
+                            <h4><i class="fas fa-sun"></i> Color Temperature</h4>
+                            <p>${report.medical_indicators.color_temperature}</p>
+                            <p class="text-small">Average color temperature of the analyzed skin area.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Recommendations Section
+            html += `
+                <div class="result-section animate-fade-in">
+                    <h3 class="result-title">
+                        <i class="fas fa-lightbulb"></i>
+                        Recommendations
+                    </h3>
+                    <ul>
+                        ${report.recommendations.map(rec => `<li class="recommendation animate-fade-in">${rec}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+
+            // Processing Information
+            html += `
+                <div class="result-section animate-fade-in">
+                    <h3 class="result-title">
+                        <i class="fas fa-info-circle"></i>
+                        Processing Information
+                    </h3>
+                    <p><strong>Analysis ID:</strong> ${data.analysis_id}</p>
+                    <p><strong>Image Size:</strong> ${data.processing_info.image_size}</p>
+                    <p><strong>Analyzed Skin Coverage:</strong> ${data.processing_info.skin_coverage_detected}</p>
+                    <p class="text-small">This information helps in understanding the analysis context.</p>
+                </div>
+            `;
+            return html;
+        }
+
+        // --- New Functions: Print, Download, Reset ---
+
+        function printReport() {
+            window.print(); // Triggers the browser's print dialog
+        }
+
+        function downloadReport() {
+            if (!analysisResults) {
+                showAlert('No analysis data to download.', 'warning');
+                return;
+            }
+
+            const dataStr = JSON.stringify(analysisResults, null, 2); // Pretty print JSON
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `jaundice_report_${analysisResults.analysis_id || new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); // Clean up the URL object
+            showAlert('Report data downloaded successfully!', 'success');
+        }
+
+        function resetApp() {
+            closeModal(); // Hide the results modal
+            currentFile = null; // Clear the selected file
+            analysisResults = null; // Clear analysis results
+            imageInput.value = ''; // Reset file input
+            imagePreview.style.display = 'none'; // Hide image preview
+            previewImg.src = ''; // Clear image source
+            showAlert('Application reset. Ready for a new analysis!', 'success');
+        }
+
+    </script>
+</body>
+</html>
