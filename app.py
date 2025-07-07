@@ -6,7 +6,7 @@ import numpy as np
 import joblib
 from PIL import Image
 
-# --- Flask App Setup ---
+# --- flask App Setup ---
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff'}
